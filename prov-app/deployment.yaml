@@ -1,0 +1,111 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: prov-app
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-content
+  namespace: prov-app
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Fleet Demo - Provisioned Cluster</title>
+      <style>
+        body {
+          font-family: Arial;
+          background: #0d1b2a;
+          color: white;
+          text-align: center;
+          padding: 50px;
+          margin: 0;
+        }
+        h1 { color: #00b4d8; }
+        .box {
+          background: #1b2838;
+          padding: 25px;
+          margin: 20px auto;
+          max-width: 600px;
+          border-radius: 12px;
+          border: 2px solid #00b4d8;
+        }
+        .green { color: #00ff88; font-size: 1.4em; font-weight: bold; }
+        .badge {
+          background: #00b4d8;
+          color: black;
+          padding: 6px 20px;
+          border-radius: 20px;
+          font-weight: bold;
+          display: inline-block;
+          margin: 10px;
+        }
+      </style>
+    </head>
+    <body>
+      <h1>🚀 Fleet GitOps Demo</h1>
+      <div class="box">
+        <p class="green">✅ PROVISIONED CLUSTER</p>
+        <div class="badge">prov-k3s | 10.0.33.148</div>
+        <p>This app was deployed by Fleet automatically</p>
+        <p>Source: GitHub Repository</p>
+        <p>No kubectl command was run manually</p>
+      </div>
+      <div class="box">
+        <h3>How Fleet Works:</h3>
+        <p>📁 Code pushed to GitHub</p>
+        <p>⬇️</p>
+        <p>👀 Fleet watches GitHub repo</p>
+        <p>⬇️</p>
+        <p>🚀 Fleet auto deploys to this cluster</p>
+      </div>
+      <div class="box">
+        <p>👩‍💻 Anjali Tripathi | B2255R10106169</p>
+        <p>AKS University | BTech CSE 8th Sem</p>
+      </div>
+    </body>
+    </html>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fleet-app
+  namespace: prov-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: fleet-app
+  template:
+    metadata:
+      labels:
+        app: fleet-app
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: html
+          mountPath: /usr/share/nginx/html
+      volumes:
+      - name: html
+        configMap:
+          name: app-content
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fleet-app-svc
+  namespace: prov-app
+spec:
+  selector:
+    app: fleet-app
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 30080
+  type: NodePort
